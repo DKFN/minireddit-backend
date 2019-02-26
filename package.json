@@ -1,0 +1,25 @@
+{
+  "name": "minireddit-backend",
+  "version": "1.0.0",
+  "description": "School project",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DavidFrancois/MiniReddit-Backend.git"
+  },
+  "author": "Francois David",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DavidFrancois/MiniReddit-Backend/issues"
+  },
+  "homepage": "https://github.com/DavidFrancois/MiniReddit-Backend#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "redis": "^2.8.0"
+  }
+}
