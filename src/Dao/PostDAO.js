@@ -26,18 +26,6 @@ const PostDAO = {
         const PostDAO = this;
         const flog = (message) => console.info("[getPost] " + message);
 
-        // FIXME : Its only getting the body of the post, missing likes and dislikes.
-        // FIXME : Use the power of this snippet :
-
-        // FIXME : const {promisify} = require('util');
-        // FIXME : const hgetAsync = promisify(client.hget).bind(client);
-
-        // FIXME : Alongside this : https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Objets_globaux/Promise/all
-        // FIXME : And make this function a fucking tank !
-
-        // FIXME : Also there is no real way to know when things have fucked without passing the res and killing evry shit
-        // FIXME : (so detached state warning might never appear before visiting post ... And seeing its detached :D)
-
         client.hgetall("post:" + postId, (err, response) => {
             flog("ERROR:" + err);
 

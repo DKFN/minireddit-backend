@@ -1,10 +1,16 @@
 # MiniReddit-Backend
 MiniReddit School project backend
 
+## What's left ?
+- Like and Dislike
+- Edit message (no auth, dont worry)
+- Replies tree fetch (if you are brave)
+- Submit your idea :)
+
 ## Launch the damn thing
 
 
-You should be able to launch the back by typing: ``./fullstart.sh``
+You should be able to launch the back by typing: ``./fulllaunch.sh``
 
 
 ##### Read the below part if you have problems, it is the manual way.
