@@ -14,10 +14,10 @@ const PostDAO = {
         client.get("posts", (err, count) => {
            if (!!err || !count) {
                client.set("posts", 0, redis.print);
-               console.warn("I created count of posts");
+               console.warn(" > I created count of posts");
            }
            if (count) {
-               console.log("Counter exists in DB, posts on boot : ", count);
+               console.log(" > Counter exists in DB, posts on boot : ", count);
            }
         });
     },
@@ -42,20 +42,19 @@ const PostDAO = {
             flog("ERROR:" + err);
 
             if (err) {
-                console.log("Error met");
+                console.error("[ERROR] Error met");
                 res && res.status(500).send(Conf.Status._500);
                 return ;
             }
 
             if (!response) {
-                console.log("ENo response met");
+                console.error("[ERROR] response met");
                 res && res.status(404).send(Conf.Status._404);
                 return ;
             }
 
             // Now we create our real Object
             try {
-                console.log(JSON.stringify(response));
                 successCallback(_PostDao().serializeFromRow(response));
             } catch (e) {
                 console.error("JSON PARSE ", {trace: e, origin: response});
@@ -88,7 +87,7 @@ const PostDAO = {
             const setPostBody = (body) => client.hset("post:" + futureId, "body", JSON.stringify(body), (err) => {
                 console.log("Setting : ", JSON.stringify(body));
                 if (!!err) {
-                    res.status(500).send(Conf.Status._500);
+                    console.error("[POST] Unable to set Bdody : ", err);
                     return;
                 }
             });
@@ -99,27 +98,19 @@ const PostDAO = {
             if (maybeParentId) {
                 const updateParentId = (parent) => {
 
-                    console.log("GOtten parent : ", parent);
-
                     // TODO : Update replies again
                     // parent.replies.push(Number.parseInt(futureId));
                     // client.hset("post:" + maybeParentId, "body", JSON.stringify(parent), redis.print);9
 
                     // Now register previous post parent Ids
-                    console.log("Parent ids : ", parent.parentIds);
+                    // console.log("Parent ids : ", parent.parentIds);
+
                     const finalParentIds = _.flatten([JSON.parse(parent.parentIds), preParentIds]);
-                    console.log("Final parent ids : ", finalParentIds);
+                    // console.log("Final parent ids : ", finalParentIds);
                     client.hset("post:" + futureId, "parentIds", JSON.stringify(finalParentIds), redis.print);
                 };
 
                 _PostDao().getPost(maybeParentId, updateParentId);
-                /*parentPosted
-                    ? OK()
-                    : res.status(206)
-                        .send({message: "Parent Id has not been found ... The post exist in detached state however"});
-
-                return;
-                */
             }
 
         });
