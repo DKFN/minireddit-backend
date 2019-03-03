@@ -1,10 +1,15 @@
 const _ = require("lodash");
-
+const {promisify} = require('util');
 const Conf = require("../constantes");
 const redis = require("redis"),
     client = redis.createClient(Conf.Redis);
 
-module.exports = {
+const asyncHgetall = promisify(client.hgetall).bind(client);
+
+const _PostDao = () => PostDAO;
+
+
+const PostDAO = {
     initDb: () => {
         client.get("posts", (err, count) => {
            if (!!err || !count) {
@@ -17,7 +22,7 @@ module.exports = {
         });
     },
 
-    getPost: (postId, successCallback, res) => {
+    getPost: (postId, successCallback, res, fetchPronise) => {
         const PostDAO = this;
         const flog = (message) => console.info("[getPost] " + message);
 
@@ -34,7 +39,6 @@ module.exports = {
         // FIXME : (so detached state warning might never appear before visiting post ... And seeing its detached :D)
 
         client.hgetall("post:" + postId, (err, response) => {
-            flog("RESPONSE:" + response);
             flog("ERROR:" + err);
 
             if (err) {
@@ -44,53 +48,71 @@ module.exports = {
             }
 
             if (!response) {
-              console.log("ENo response met");
-              res && res.status(404).send(Conf.Status._404);
-              return ;
+                console.log("ENo response met");
+                res && res.status(404).send(Conf.Status._404);
+                return ;
             }
 
             // Now we create our real Object
             try {
-                // pickBy allows me to filter technical datas I don't want exposed in the API
-                const completePost = _.pickBy(
-                    Object.assign(response, {...JSON.parse(response.body)}),
-                    (v, k) => k !== "body"
-                );
-
-                successCallback(completePost);
+                console.log(JSON.stringify(response));
+                successCallback(_PostDao().serializeFromRow(response));
             } catch (e) {
                 console.error("JSON PARSE ", {trace: e, origin: response});
-                res.status(500).send(Conf.Status._500)
+                res && res.status(500).send(Conf.Status._500)
             }
         });
     },
 
-    insertPost: (maybeParentId, post) => {
+    insertPost: (maybeParentId, post, res) => {
         client.incr("posts", (err, futureId) => {
             if (!!err) {
                 res.status(500).send(Conf.Status._500);
                 return;
             }
 
-            client.hset("post:" + futureId, "body", post, (err) => {
+            // TODO : Check mandatory fields
+
+            // TODO : For /like && /dislike routes : https://redis.io/commands/HINCRBY
+            client.hset("post:" + futureId, "likes", 0);
+            client.hset("post:" + futureId, "dislikes", 0);
+
+            // First set parentId to param parent id in array
+            const preParentIds = maybeParentId ? [maybeParentId] : [];
+            client.hset("post:" + futureId, "parentIds", JSON.stringify(preParentIds), redis.print);
+            client.hset("post:" + futureId, "replies", JSON.stringify({}), redis.print);
+            client.hset("post:" + futureId, "id", futureId, redis.print);
+
+
+            // Then push with only parent and reply OK
+            const setPostBody = (body) => client.hset("post:" + futureId, "body", JSON.stringify(body), (err) => {
+                console.log("Setting : ", JSON.stringify(body));
                 if (!!err) {
                     res.status(500).send(Conf.Status._500);
                     return;
                 }
             });
 
-            // FIXME : For /like && /dislike routes : https://redis.io/commands/HINCRBY
-            client.hset("post:" + futureId, "likes", 0);
-            client.hset("post:" + futureId, "dislikes", 0);
+            setPostBody(post);
 
             // Adding as a reply if parentId is defined
             if (maybeParentId) {
                 const updateParentId = (parent) => {
-                    parent.replies.push(Number.parseInt(futureId));
-                    client.hset("post:" + maybeParentId, "body", JSON.stringify(parent), redis.print);
+
+                    console.log("GOtten parent : ", parent);
+
+                    // TODO : Update replies again
+                    // parent.replies.push(Number.parseInt(futureId));
+                    // client.hset("post:" + maybeParentId, "body", JSON.stringify(parent), redis.print);9
+
+                    // Now register previous post parent Ids
+                    console.log("Parent ids : ", parent.parentIds);
+                    const finalParentIds = _.flatten([JSON.parse(parent.parentIds), preParentIds]);
+                    console.log("Final parent ids : ", finalParentIds);
+                    client.hset("post:" + futureId, "parentIds", JSON.stringify(finalParentIds), redis.print);
                 };
 
-                PostDAO.getPost(maybeParentId, updateParentId);
+                _PostDao().getPost(maybeParentId, updateParentId);
                 /*parentPosted
                     ? OK()
                     : res.status(206)
@@ -99,16 +121,18 @@ module.exports = {
                 return;
                 */
             }
+
         });
-    }
-    /*,
+    },
+
+    getParent: (parentId, handler, previousData) => asyncHgetall("post:"+parentId),
 
 
-    getParents: (originNode) => {
-        const PostDAO = this;
-        const maybeParentId = originNode.parentId;
-        if () {
-            PostDAO.getPost(maybeParentId, (p) => originNode.parents);
-        }
-    }*/
+    serializeFromRow: (response) => _.pickBy(
+        Object.assign(response, JSON.parse(response.body)),
+        (v, k) => k !== "body"
+    ),
+
 };
+
+module.exports = PostDAO;
