@@ -2,6 +2,13 @@
 MiniReddit School project backend
 
 ## Launch the damn thing
+
+
+You should be able to launch the back by typing: ``./fullstart.sh``
+
+
+##### Read the below part if you have problems, it is the manual way.
+
 First thing first, get yourself a redis up and running:
 ```shell
  docker run --name reddits-redis -p 6379:6379  redis
@@ -57,6 +64,8 @@ So a side note about db, if you stop you redis docker, data will still be saved 
 
 Nice , now lets get to 
 ## Usage of the API 
+
+(This part needs update on datasources explanation, whole idea is the same but id fetching has quite changed it will come very soon)
 
 Minimum version of a post (To be discussed):
 ```json
