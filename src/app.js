@@ -72,6 +72,27 @@ app.post("/post/:maybeParentId?", (req, res) => {
     OK();
 });
 
+app.put("/like/:postId", (req, res) => {
+  const postId = req.params.postId;
+
+  const OK = () => res.send({message: "OK"});
+  // const flog = (handler, message) => handler("[POST /like/" + postId + "]" + message);
+
+  // flog(console.info,"OK : "  , req.body);
+
+  // FIXME : Check for fields
+  // res.status(400).send(Conf.Status._400);
+
+  // We set the body of the post
+  // FIXME : We can totally make promises for all the hsets (see below)"count"
+  // (Except incr function, letting the block enclosed ensures no one elses picks this data until all work done)
+
+  PostDAO.likePost(postId, res);
+  OK();
+});
+
+
+
 module.exports = app;
 
 /* routes.forEach((route) => {

@@ -106,6 +106,19 @@ const PostDAO = {
 
     getParent: (parentId, handler, previousData) => asyncHgetall("post:"+parentId),
 
+    // exists: (key) => client.hget(key, (err, res) => {
+    //     if (err) return 500;
+    //     if (!response) return 404;
+    //     return 200;
+    // }),
+
+    likePost: (postId, res) => {
+        const like = () => client.hincrby(`post:${postId}`, 'likes', 1, (err, response) => {
+
+        });
+
+        like();
+    },
 
     serializeFromRow: (response) => _.pickBy(
         Object.assign(response, JSON.parse(response.body)),
