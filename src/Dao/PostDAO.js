@@ -1,5 +1,5 @@
 const _ = require("lodash");
-const {promisify} = require('util');
+const { promisify } = require('util');
 const Conf = require("../constantes");
 const redis = require("redis"),
     client = redis.createClient(Conf.Redis);
@@ -14,19 +14,18 @@ const filteredProps = ["body", "parentIds"];
 const PostDAO = {
     initDb: () => {
         client.get("posts", (err, count) => {
-           if (!!err || !count) {
-               client.set("posts", 0, redis.print);
-               console.warn(" > I created count of posts");
-           }
-           if (count) {
-               console.log(" > Counter exists in DB, posts on boot : ", count);
-           }
+            if (!!err || !count) {
+                client.set("posts", 0, redis.print);
+                console.warn(" > I created count of posts");
+            }
+            if (count) {
+                console.log(" > Counter exists in DB, posts on boot : ", count);
+            }
         });
     },
 
     getPost: (postId, successCallback, res, fetchPronise) => {
-        const PostDAO = this;
-        const flog = (message) => console.info("[getPost] " + message);
+        const flog = (message) => console.log(`[getPost]: ${message}`);
 
         client.hgetall("post:" + postId, (err, response) => {
             flog("ERROR:" + err);
@@ -34,20 +33,20 @@ const PostDAO = {
             if (err) {
                 console.error("[ERROR] Error met");
                 res && res.status(500).send(Conf.Status._500);
-                return ;
+                return;
             }
 
             if (!response) {
                 console.error("[ERROR] response met");
                 res && res.status(404).send(Conf.Status._404);
-                return ;
+                return;
             }
 
             // Now we create our real Object
             try {
                 successCallback(_PostDao().serializeFromRow(response));
             } catch (e) {
-                console.error("JSON PARSE ", {trace: e, origin: response});
+                console.error("JSON PARSE ", { trace: e, origin: response });
                 res && res.status(500).send(Conf.Status._500)
             }
         });
@@ -106,8 +105,32 @@ const PostDAO = {
         });
     },
 
-    getParent: (parentId, handler, previousData) => asyncHgetall("post:"+parentId),
+    getParent: (parentId, handler, previousData) => asyncHgetall("post:" + parentId),
 
+    likeDislikePost: (postId, field, res) => {
+        const key = `post:${postId}`;
+        const like = () => client.hincrby(key, field, 1, (err, response) => _PostDao().errorHandler(err, response, res));
+
+        _PostDao().exists(key, res, like);
+    },
+
+    exists: (key, res, success) => client.hget(key, 'id', (err, response) => _PostDao().errorHandler(err, response, res, success)),
+
+    errorHandler: (err, fnRes, orgRes, cb) => {
+        if (err) {
+            console.error("[ERROR] Error met");
+            orgRes && orgRes.status(500).send(Conf.Status._500);
+            return;
+        }
+
+        if (!fnRes) {
+            console.error("[ERROR] response met");
+            orgRes && orgRes.status(404).send(Conf.Status._404);
+            return;
+        }
+
+        return cb ? cb() : orgRes && orgRes.status(200).send({ message: 'OK' });;
+    },
 
     serializeFromRow: (response) => _.pickBy(
         Object.assign(response, JSON.parse(response.body)),

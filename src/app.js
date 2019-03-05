@@ -58,7 +58,7 @@ app.get("/post/:id", (req, res) => {
 app.post("/post/:maybeParentId?", (req, res) => {
     const maybeParentId = req.params.maybeParentId;
 
-    const OK = () => res.send({message: "OK"});
+    const OK = () => res.send({ message: "OK"});
     const flog = (handler, message) => handler("[POST /post/" + maybeParentId + "]" + message);
 
     flog(console.info,"OK : "  + req.body);
@@ -73,5 +73,17 @@ app.post("/post/:maybeParentId?", (req, res) => {
     PostDAO.insertPost(maybeParentId, req.body, res);
     OK();
 });
+
+app.put("/like/:postId", (req, res) => {
+  const postId = req.params.postId;
+  PostDAO.likeDislikePost(postId, 'likes', res);
+});
+
+app.put("/dislike/:postId", (req, res) => {
+  const postId = req.params.postId;
+  PostDAO.likeDislikePost(postId, 'dislikes', res);
+});
+
+
 
 module.exports = app;
