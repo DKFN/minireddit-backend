@@ -8,6 +8,8 @@ const asyncHgetall = promisify(client.hgetall).bind(client);
 
 const _PostDao = () => PostDAO;
 
+// Filtered fields after DB Serialization / Unserialization
+const filteredProps = ["body", "parentIds"];
 
 const PostDAO = {
     initDb: () => {

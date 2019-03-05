@@ -43,7 +43,8 @@ app.get("/post/:id", (req, res) => {
         if (parentIds.length !== 0) {
             Promise.all(parentIds.map((pId) => PostDAO.getParent(pId)))
                 .then((parents) => {
-                    res.send(Object.assign(x, {parents: parents}));
+                    const finalParents = parents.map((p) => PostDAO.serializeFromRow(p));
+                    res.send(Object.assign(x, {parents: finalParents}));
                 });
         } else
             res.send(x);
@@ -59,7 +60,7 @@ app.post("/post/:maybeParentId?", (req, res) => {
     const OK = () => res.send({message: "OK"});
     const flog = (handler, message) => handler("[POST /post/" + maybeParentId + "]" + message);
 
-    flog(console.info,"OK : "  ,req.body);
+    flog(console.info,"OK : "  + req.body);
 
     // FIXME : Check for fields
     // res.status(400).send(Conf.Status._400);
