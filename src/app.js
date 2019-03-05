@@ -56,7 +56,7 @@ app.get("/post/:id", (req, res) => {
 app.post("/post/:maybeParentId?", (req, res) => {
     const maybeParentId = req.params.maybeParentId;
 
-    const OK = () => res.send({message: "OK"});
+    const OK = () => res.send({ message: "OK"});
     const flog = (handler, message) => handler("[POST /post/" + maybeParentId + "]" + message);
 
     flog(console.info,"OK : "  ,req.body);
@@ -74,21 +74,12 @@ app.post("/post/:maybeParentId?", (req, res) => {
 
 app.put("/like/:postId", (req, res) => {
   const postId = req.params.postId;
+  PostDAO.likeDislikePost(postId, 'likes', res);
+});
 
-  const OK = () => res.send({message: "OK"});
-  // const flog = (handler, message) => handler("[POST /like/" + postId + "]" + message);
-
-  // flog(console.info,"OK : "  , req.body);
-
-  // FIXME : Check for fields
-  // res.status(400).send(Conf.Status._400);
-
-  // We set the body of the post
-  // FIXME : We can totally make promises for all the hsets (see below)"count"
-  // (Except incr function, letting the block enclosed ensures no one elses picks this data until all work done)
-
-  PostDAO.likePost(postId, res);
-  OK();
+app.put("/dislike/:postId", (req, res) => {
+  const postId = req.params.postId;
+  PostDAO.likeDislikePost(postId, 'dislikes', res);
 });
 
 
