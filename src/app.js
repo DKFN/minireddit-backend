@@ -6,6 +6,7 @@ const _ = require("lodash");
 const routes = require('./routes');
 const Conf = require("./constantes");
 const PostDAO = require("./Dao/PostDAO");
+
 const redis = require("redis"),
     client = redis.createClient(Conf.Redis);
 
@@ -23,17 +24,16 @@ app.get("/", (req, res) => {
   res.send("Nothing here");
 });
 
+app.use(function(err, req, res, next) {
+    console.error("Unhandled exception sandboxed");
+    console.error(err.stack);
+    res.status(500).send(Conf.Status._500);
+});
+
 // On app boot, sets redis counter if not existing in the db
 PostDAO.initDb();
 
-// FIXME: Move to utils file
-const promiseSerial = funcs =>
-    funcs.reduce((promise, func) =>
-            promise.then(result => func().then(Array.prototype.concat.bind(result))),
-        Promise.resolve([]));
-
 app.get("/post/:id", (req, res) => {
-    // TODO : This API only gets one document. Ready for tree recursion ?! :D
     console.log("[GET /post/:id] Post fetch id : " + req.params.id);
 
     // Express somehow needs the req in res.send, so I need a proxy function :'(
@@ -43,8 +43,10 @@ app.get("/post/:id", (req, res) => {
         if (parentIds.length !== 0) {
             Promise.all(parentIds.map((pId) => PostDAO.getParent(pId)))
                 .then((parents) => {
-                    res.send(Object.assign(x, {parents: parents}));
-                });
+                    const finalParents = parents.map((p) => PostDAO.serializeFromRow(p));
+                    res.send(Object.assign(x, {parents: finalParents}));
+                })
+                .catch((e) => res.status(500).send(Conf.Status._500));
         } else
             res.send(x);
     };
@@ -59,7 +61,7 @@ app.post("/post/:maybeParentId?", (req, res) => {
     const OK = () => res.send({ message: "OK"});
     const flog = (handler, message) => handler("[POST /post/" + maybeParentId + "]" + message);
 
-    flog(console.info,"OK : "  ,req.body);
+    flog(console.info,"OK : "  + req.body);
 
     // FIXME : Check for fields
     // res.status(400).send(Conf.Status._400);
@@ -85,7 +87,3 @@ app.put("/dislike/:postId", (req, res) => {
 
 
 module.exports = app;
-
-/* routes.forEach((route) => {
-  app.use(route.path, route.router);
-}); */
