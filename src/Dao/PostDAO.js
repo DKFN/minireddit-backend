@@ -68,7 +68,7 @@ const PostDAO = {
             // First set parentId to param parent id in array
             const preParentIds = maybeParentId ? [maybeParentId] : [];
             client.hset("post:" + futureId, "parentIds", JSON.stringify(preParentIds), redis.print);
-            client.hset("post:" + futureId, "replies", JSON.stringify({}), redis.print);
+            client.hset("post:" + futureId, "replies", JSON.stringify([]), redis.print);
             client.hset("post:" + futureId, "id", futureId, redis.print);
 
 
@@ -86,17 +86,56 @@ const PostDAO = {
             // Adding as a reply if parentId is defined
             if (maybeParentId) {
                 const updateParentId = (parent) => {
+                    const parentParentIds = JSON.parse(parent.parentIds);
+                    const z = () => _PostDao();
 
-                    // TODO : Update replies again
-                    // parent.replies.push(Number.parseInt(futureId));
-                    // client.hset("post:" + maybeParentId, "body", JSON.stringify(parent), redis.print);9
+                    // On recupere ici tous les parents +1 (parents du parent)
+                    // Le but ici est de mettre a jour tout l'arbre de reponses
+                    const zippedFutures = parentParentIds.map((pId) => z().getParent(pId));
 
-                    // Now register previous post parent Ids
-                    // console.log("Parent ids : ", parent.parentIds);
+                     Promise.all(zippedFutures)
+                        .then((parents) => {
 
-                    const finalParentIds = _.flatten([JSON.parse(parent.parentIds), preParentIds]);
-                    // console.log("Final parent ids : ", finalParentIds);
+                            // Pour tous les objets a update
+                            const finalParents = parents.map((p) => z().serializeFromRow(p));
+                            finalParents.map((par) => {
+
+                                // Cette fonction est recursive et permet de trouver dans l'arbre l'emplacement de la reponse
+                                // et de mettre a jour le chemin des reponses
+                                function attemptPushStruct(searchReplies, originalReplies,  targetStruct) {
+                                    const maybeIndex = _.findIndex(searchReplies , {id: Number.parseInt(parent.id)});
+
+                                    // Si on ne trouve pas, on descend un niveau de reponses
+                                    // dans toutes les reponses de ce niveau
+                                    // Si l'array est vide, map ne s'executera pas et restera [] sans continuer
+                                    if (maybeIndex === -1) {
+                                        return Object.assign(
+                                            originalReplies,
+                                            {replies: searchReplies.map((r) => attemptPushStruct(r.replies, r, targetStruct))}
+                                        );
+                                    }
+
+                                    // Si on trouve cool on retourne notre structure avec la structure de reponse
+                                    // de notre nouveau post
+                                    searchReplies[maybeIndex].replies.push(targetStruct);
+                                    return Object.assign(originalReplies, {replies: searchReplies[maybeIndex]});
+                                }
+
+                                const repliesSeq = JSON.parse(par.replies);
+                                const newReplies = attemptPushStruct(repliesSeq, repliesSeq, {id: futureId, replies: []});
+
+                                client.hset("post:" + par.id, "replies", JSON.stringify(newReplies), redis.print);
+
+                            });
+                        });
+
+                    const finalParentIds = _.flatten([parentParentIds, preParentIds]);
                     client.hset("post:" + futureId, "parentIds", JSON.stringify(finalParentIds), redis.print);
+
+                    // L'update du parent direct est un peu facile
+                    let repliesSeq = JSON.parse(parent.replies);
+                    repliesSeq.push({id: futureId, replies: []});
+                    client.hset("post:" + parent.id, "replies", JSON.stringify(repliesSeq), redis.print);
                 };
 
                 _PostDao().getPost(maybeParentId, updateParentId);
