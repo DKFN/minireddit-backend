@@ -91,9 +91,9 @@ const PostDAO = {
 
                     // On recupere ici tous les parents +1 (parents du parent)
                     // Le but ici est de mettre a jour tout l'arbre de reponses
-                    const zippedFutures = parentParentIds.map((pId) => z().getParent(pId));
+                    const zippedFutures = parentParentIds.map((pId) => z().getPostAsync(pId));
 
-                     Promise.all(zippedFutures)
+                    Promise.all(zippedFutures)
                         .then((parents) => {
 
                             // Pour tous les objets a update
@@ -102,8 +102,8 @@ const PostDAO = {
 
                                 // Cette fonction est recursive et permet de trouver dans l'arbre l'emplacement de la reponse
                                 // et de mettre a jour le chemin des reponses
-                                function attemptPushStruct(searchReplies, originalReplies,  targetStruct) {
-                                    const maybeIndex = _.findIndex(searchReplies , {id: Number.parseInt(parent.id)});
+                                function attemptPushStruct(searchReplies, originalReplies, targetStruct) {
+                                    const maybeIndex = _.findIndex(searchReplies, { id: Number.parseInt(parent.id) });
 
                                     // Si on ne trouve pas, on descend un niveau de reponses
                                     // dans toutes les reponses de ce niveau
@@ -111,18 +111,18 @@ const PostDAO = {
                                     if (maybeIndex === -1) {
                                         return Object.assign(
                                             originalReplies,
-                                            {replies: searchReplies.map((r) => attemptPushStruct(r.replies, r, targetStruct))}
+                                            { replies: searchReplies.map((r) => attemptPushStruct(r.replies, r, targetStruct)) }
                                         );
                                     }
 
                                     // Si on trouve cool on retourne notre structure avec la structure de reponse
                                     // de notre nouveau post
                                     searchReplies[maybeIndex].replies.push(targetStruct);
-                                    return Object.assign(originalReplies, {replies: searchReplies[maybeIndex]});
+                                    return Object.assign(originalReplies, { replies: searchReplies[maybeIndex] });
                                 }
 
                                 const repliesSeq = JSON.parse(par.replies);
-                                const newReplies = attemptPushStruct(repliesSeq, repliesSeq, {id: futureId, replies: []});
+                                const newReplies = attemptPushStruct(repliesSeq, repliesSeq, { id: futureId, replies: [] });
 
                                 client.hset("post:" + par.id, "replies", JSON.stringify(newReplies), redis.print);
 
@@ -134,7 +134,7 @@ const PostDAO = {
 
                     // L'update du parent direct est un peu facile
                     let repliesSeq = JSON.parse(parent.replies);
-                    repliesSeq.push({id: futureId, replies: []});
+                    repliesSeq.push({ id: futureId, replies: [] });
                     client.hset("post:" + parent.id, "replies", JSON.stringify(repliesSeq), redis.print);
                 };
 
@@ -144,7 +144,63 @@ const PostDAO = {
         });
     },
 
-    getParent: (parentId, handler, previousData) => asyncHgetall("post:" + parentId),
+    setPostReplies: (post, next) => {
+        const mapIds = (arr) => arr.map(p => p.id);
+        const repliesIds = mapIds(JSON.parse(post.replies))
+
+        const getRepliesIds = (posts) => {
+            const allReplies = posts.map(p => p.replies)
+            const rep = JSON.parse(p.replies)
+
+
+            const reps = [...rep, ...allReplies].map(r => r.id);
+
+            if (allReplies.replies.length > 0) return getRepliesIds()
+
+            return allRepliesn;
+
+        }
+
+        const repliesFromArray = (ids, next) => {
+            const futures = ids.map(id => _PostDao().getPostAsync(id))
+
+            Promise.all(futures)
+                .then(posts => {
+                    posts.map(p => {
+                        const replies = JSON.parse(p.replies)
+
+                        if (replies.length > 0) _PostsetPostReplies(replies.map(rep => rep.id))
+                        else {
+                            post.replies = replies;
+                            next(post);
+                        }
+                    })
+                    posts.forEach(p => postsFromArray(p.replies.map(r => r.id)))
+                })
+        }
+
+        repliesFromArray(repliesIds, next);
+    },
+
+    getTree: (postId, res) => {
+
+        const toFlatArray = (arr) => {
+            const flattener = (arr) =>
+                arr.map(elt => {
+                    if (elt.replies && elt.replies.length > 0) elt.replies = flattener(elt.replies)
+                    console.log(_.flatten(Object.values(elt)))
+                    return _.flatten(Object.values(elt))
+                })
+
+            return _.flattenDeep(flattener(arr))
+        }
+
+        client.hgetall("post:" + postId, (err, response) => {
+            console.log(response)
+        });
+    },
+
+    getPostAsync: (id, handler, previousData) => asyncHgetall("post:" + id),
 
     likeDislikePost: (postId, field, res) => {
         const key = `post:${postId}`;
