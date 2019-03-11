@@ -1,6 +1,8 @@
 # MiniReddit-Backend
 MiniReddit School project backend
 
+This is a test for branches in CI
+
 ## What's left ?
 - Like and Dislike
 - Edit message (no auth, dont worry)
