@@ -118,7 +118,7 @@ const PostDAO = {
                                     // Si on trouve cool on retourne notre structure avec la structure de reponse
                                     // de notre nouveau post
                                     searchReplies[maybeIndex].replies.push(targetStruct);
-                                    return Object.assign(originalReplies, {replies: searchReplies[maybeIndex]});
+                                    return Object.assign(originalReplies, {replies: [searchReplies[maybeIndex]]});
                                 }
 
                                 const repliesSeq = JSON.parse(par.replies);
