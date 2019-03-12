@@ -218,7 +218,6 @@ const PostDAO = {
         const recurSerialize = (source) => {
             if (source.replies.length > 0) {
                 const newReplies = source.replies.map((r) => {
-                    console.log(r);
                     const post = _PostDao().serializeFromRow(r);
                     post.replies = recurSerialize(post);
                     return post;
