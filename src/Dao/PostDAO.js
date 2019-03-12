@@ -155,29 +155,26 @@ const PostDAO = {
 
             const reps = [...rep, ...allReplies].map(r => r.id);
 
-            if (allReplies.replies.length > 0) return getRepliesIds()
-
+            if (allReplies.replies.length > 0)
+                return getRepliesIds();
             return allRepliesn;
 
         }
 
         const repliesFromArray = (ids, next) => {
-            const futures = ids.map(id => _PostDao().getPostAsync(id))
+            const futures = ids.map(id => _PostDao().getPostAsync(id));
 
             Promise.all(futures)
                 .then(posts => {
                     posts.map(p => {
-                        const replies = JSON.parse(p.replies)
+                        const replies = JSON.parse(p.replies);
 
-                        if (replies.length > 0) _PostsetPostReplies(replies.map(rep => rep.id))
-                        else {
-                            post.replies = replies;
-                            next(post);
-                        }
-                    })
+                        if (replies.length > 0)
+                            _PostsetPostReplies(replies.map(rep => rep.id));
+                    });
                     posts.forEach(p => postsFromArray(p.replies.map(r => r.id)))
                 })
-        }
+        };
 
         repliesFromArray(repliesIds, next);
     },
@@ -209,10 +206,28 @@ const PostDAO = {
             }
 
             post.replies = finalReplies(post.replies)
+            console.log(post);
+            _PostDao().replyTreeSerialize(post);
             res.send(post);
         })
 
 
+    },
+
+    replyTreeSerialize: (reply) => {
+        const recurSerialize = (source) => {
+            if (source.replies.length > 0) {
+                const newReplies = source.replies.map((r) => {
+                    const post = _PostDao().serializeFromRow(r);
+                    post.replies = recurSerialize(post);
+                    return post;
+                });
+                return newReplies;
+            } else {
+                return source.replies;
+            }
+        };
+       reply.replies = recurSerialize(reply);
     },
 
     getPostAsync: (id, handler, previousData) => asyncHgetall("post:" + id),
