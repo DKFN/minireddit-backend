@@ -35,20 +35,19 @@ PostDAO.initDb();
 
 app.get("/post/:id", (req, res) => {
     console.log("[GET /post/:id] Post fetch id : " + req.params.id);
-
     // Express somehow needs the req in res.send, so I need a proxy function :'(
     // Ands gets it implicitly T_T
     const f = (x) =>  {
         const parentIds = JSON.parse(x.parentIds);
         if (parentIds.length !== 0) {
-            Promise.all(parentIds.map((pId) => PostDAO.getParent(pId)))
+            Promise.all(parentIds.map((pId) => PostDAO.getPostAsync(pId)))
                 .then((parents) => {
                     const finalParents = parents.map((p) => PostDAO.serializeFromRow(p));
-                    res.send(Object.assign(x, {parents: finalParents}));
+                    PostDAO.getTree(Object.assign(x, {parents: finalParents}), res);
                 })
-                .catch((e) => res.status(500).send(Conf.Status._500));
+                .catch((e) => res.status(500).send(Conf.Status._500))
         } else
-            res.send(x);
+            PostDAO.getTree(x, res);
     };
 
 

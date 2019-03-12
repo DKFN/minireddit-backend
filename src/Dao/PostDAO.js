@@ -78,7 +78,7 @@ const PostDAO = {
                 if (!!err) {
                     console.error("[POST] Unable to set Bdody : ", err);
                     return;
-                }
+                } 
             });
 
             setPostBody(post);
@@ -118,7 +118,7 @@ const PostDAO = {
                                     // Si on trouve cool on retourne notre structure avec la structure de reponse
                                     // de notre nouveau post
                                     searchReplies[maybeIndex].replies.push(targetStruct);
-                                    return Object.assign(originalReplies, {replies: [searchReplies[maybeIndex]]});
+                                    return Object.assign(originalReplies, { replies: [searchReplies[maybeIndex]] });
                                 }
 
                                 const repliesSeq = JSON.parse(par.replies);
@@ -182,22 +182,37 @@ const PostDAO = {
         repliesFromArray(repliesIds, next);
     },
 
-    getTree: (postId, res) => {
+    getTree: (post, res) => {
 
         const toFlatArray = (arr) => {
             const flattener = (arr) =>
                 arr.map(elt => {
                     if (elt.replies && elt.replies.length > 0) elt.replies = flattener(elt.replies)
-                    console.log(_.flatten(Object.values(elt)))
                     return _.flatten(Object.values(elt))
                 })
 
             return _.flattenDeep(flattener(arr))
         }
 
-        client.hgetall("post:" + postId, (err, response) => {
-            console.log(response)
-        });
+        const flattenReplies = toFlatArray(JSON.parse(post.replies));
+
+        const futures = flattenReplies.map(rep => _PostDao().getPostAsync(rep));
+
+        Promise.all(futures).then(replies => {
+            const buildReplies = (arr) => arr.map(rep => replies.find(r => Number.parseInt(r.id) === rep.id));
+
+            const finalReplies = (arr) => {
+                return buildReplies(JSON.parse(arr)).map(rep => {
+                    if (rep.replies && rep.replies.length > 0) rep.replies = finalReplies(rep.replies)
+                    return rep;
+                })
+            }
+
+            post.replies = finalReplies(post.replies)
+            res.send(post);
+        })
+
+
     },
 
     getPostAsync: (id, handler, previousData) => asyncHgetall("post:" + id),
