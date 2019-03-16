@@ -1,6 +1,7 @@
 module.exports = {
     Redis: {
         host: "172.17.0.3",
+        password: "redispass",
         retry_strategy: function (options) {
             if (options.error && options.error.code === 'ECONNREFUSED') {
                 // End reconnecting on a specific error and flush all commands with
