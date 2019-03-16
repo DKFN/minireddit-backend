@@ -1,7 +1,7 @@
 docker pull redis
 docker rm -f reddits-redis
 docker rm -f miniredit
-docker run --name reddits-redis -d -p 6379:6379 redis &
+docker run --name reddits-redis -d -p 6379:6379 redis --requirepass redispass &
 
 if [ -z $1 ]; then 
 	sleep 1;

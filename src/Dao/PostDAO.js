@@ -208,6 +208,8 @@ const PostDAO = {
             post.replies = finalReplies(post.replies)
             console.log(post);
             _PostDao().replyTreeSerialize(post);
+            if (post.parents)
+                post.parents = post.parents.map((x) => _.pickBy(x, (v, k) => k !== "replies"));
             res.send(post);
         })
 
