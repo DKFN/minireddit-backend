@@ -5,11 +5,6 @@ docker stop reddits-redis
 docker rm miniredit
 docker rm reddits-redis
 
-# Provisory
-docker run --name reddits-redis -d -p 6379:6379 redis --requirepass redispass &
-
-sleep 5;
-
 docker build -t miniredit .
 docker logs reddits-redis
-docker run -v $(pwd):/data --name miniredit -p 80:8080 -e REDIS_HOST="172.17.0.2" -e REDIS_PASS="redispass" -d miniredit
+docker run -v $(pwd):/data --name miniredit -p 80:8080 -e REDIS_HOST="perma-8gb01.ovh-grav.infra.tetel.in" -e REDIS_PASS="redispass" -d miniredit
