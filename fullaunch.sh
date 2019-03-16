@@ -20,6 +20,6 @@ fi;
 
 docker build -t miniredit .
 docker logs reddits-redis
-docker run -v $(pwd):/data --name miniredit -p 80:8080 miniredit &
+docker run -v $(pwd):/data --name miniredit -p 80:8080 -e REDIS_HOST="172.17.0.3" -e REDIS_PASS="redispass" miniredit &
 ./set_dataset.sh
 docker logs -f miniredit

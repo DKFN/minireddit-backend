@@ -1,7 +1,9 @@
+const process = require("process");
+
 module.exports = {
     Redis: {
-        host: "172.17.0.3",
-        password: "redispass",
+        host: process.env.REDIS_HOST,
+        password: process.env.REDIS_PASS,
         retry_strategy: function (options) {
             if (options.error && options.error.code === 'ECONNREFUSED') {
                 // End reconnecting on a specific error and flush all commands with
