@@ -21,7 +21,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.get("/", (req, res) => {
-  res.send("Nothing here");
+  res.send("MiniReddit v 0.1");
 });
 
 app.use(function(err, req, res, next) {
