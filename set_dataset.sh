@@ -6,8 +6,8 @@ curl -X POST \
   -H 'Cache-Control: no-cache' \
   -H 'Content-Type: application/json' \
   -d '{
-	"title": "O",
-	"message": "Original !",
+	"title": "Have you feel strange",
+	"message": "I am wondering is the sky blue ?",
 	"author": "Admin"
 }';
 
@@ -17,7 +17,7 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '{
 	"title": "R",
-	"message": "Reply 2!",
+	"message": "I guess for a fact.",
 	"author": "Admin"
 }';
 
@@ -27,7 +27,7 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '{
 	"title": "R",
-	"message": "Reply 3!",
+	"message": "You have to take in account it is relative for example daltoninans who dont see blue ?",
 	"author": "Admin"
 }';
 
@@ -37,7 +37,7 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '{
 	"title": "R",
-	"message": "Reply 4!",
+	"message": "I am daltonian and I see blue, but I dont know about orthers.",
 	"author": "Admin"
 }';
 
@@ -48,6 +48,6 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '{
 	"title": "R",
-	"message": "Diverging /o/",
+	"message": "I never see the sky",
 	"author": "Admin"
 }';
