@@ -84,7 +84,7 @@ app.put("/dislike/:postId", (req, res) => {
 });
 
 app.get("/version", (req, res) => {
-    res.send({version: "0.0.1"});
+    res.send({version: "0.0.2"});
 });
 
 
