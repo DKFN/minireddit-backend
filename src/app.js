@@ -83,6 +83,10 @@ app.put("/dislike/:postId", (req, res) => {
   PostDAO.likeDislikePost(postId, 'dislikes', res);
 });
 
+app.get("/version", (req, res) => {
+    res.send({version: "0.0.1"});
+});
+
 
 
 module.exports = app;
